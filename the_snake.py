@@ -15,19 +15,19 @@ LEFT = (-1, 0)
 RIGHT = (1, 0)
 
 # Цвет фона - черный:
-BOARD_BACKGROUND_COLOR = (0, 0, 0)
+BOARD_BACKGROUND_COLOR = (255, 255, 155)
 
 # Цвет границы ячейки
-BORDER_COLOR = (93, 216, 228)
+BORDER_COLOR = (50, 200, 50)
 
 # Цвет яблока
-APPLE_COLOR = (255, 0, 0)
+APPLE_COLOR = (255, 25, 25)
 
 # Цвет змейки
-SNAKE_COLOR = (0, 255, 0)
+SNAKE_COLOR = (25, 255, 25)
 
 # Скорость движения змейки:
-SPEED = 20
+SPEED = 18
 
 # Настройка игрового окна:
 screen = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT), 0, 32)
@@ -218,7 +218,8 @@ def main():
     # Экземпляры классов:
     apple = Apple()
     snake = Snake()
-    # snake = Snake()
+    # Заполняем экран цветом
+    screen.fill(BOARD_BACKGROUND_COLOR)
     # Основная логика игры:
     while True:
         clock.tick(SPEED)
