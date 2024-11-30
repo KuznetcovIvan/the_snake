@@ -245,16 +245,20 @@ def main():
     bad_apple = BadApple()
     poisoned_apple = PoisonedApple()
     snake = Snake()
-    # Заполняем экран цветом
-    screen.fill(BOARD_BACKGROUND_COLOR)
+
+    # Добавляю очки на экран:
+    font = pygame.font.SysFont('Arial', 32)
+    score = font.render(str((snake.length) - 1), 1, (0, 0, 0))
     # Основная логика игры:
     while True:
+        screen.fill(BOARD_BACKGROUND_COLOR)
         clock.tick(SPEED)
+        score = font.render(str((snake.length) - 1), 1, (0, 0, 0))
+        screen.blit(score, (20, 15))
         apple.draw()
         bad_apple.draw()
         poisoned_apple.draw()
         snake.draw()
-
         handle_keys(snake)
         snake.update_direction()
         snake.move()
@@ -282,6 +286,7 @@ def main():
         if snake.positions[0] in snake.positions[1:]:
             snake.reset()
             screen.fill(BOARD_BACKGROUND_COLOR)
+
         pygame.display.update()
 
 
