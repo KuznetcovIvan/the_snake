@@ -18,15 +18,18 @@ RIGHT = (1, 0)
 BOARD_BACKGROUND_COLOR = (255, 255, 155)
 
 # Цвет границы ячейки
-BORDER_COLOR = (50, 200, 50)
+BORDER_COLOR = (0, 0, 0)
 
 # Цвет яблока
 APPLE_COLOR = (255, 25, 25)
-
+# Цвет плохого яблока
+BAD_APPLE_COLOR = (150, 25, 25)
+# Цвет отравленного яблока
+POISONED_APPLE_COLOR = (50, 25, 25)
 # Цвет змейки
 SNAKE_COLOR = (25, 255, 25)
 
-# Скорость движения змейки:
+# Начальная скорость движения змейки:
 SPEED = 18
 
 # Настройка игрового окна:
@@ -102,6 +105,28 @@ class Apple(GameObject):
         rect = pygame.Rect(self.position, (GRID_SIZE, GRID_SIZE))
         pygame.draw.rect(screen, self.body_color, rect)
         pygame.draw.rect(screen, BORDER_COLOR, rect, 1)
+
+
+class BadApple(Apple):
+    """
+    Класс, унаследованный от Aplle,
+    описывающий плохое яблоко.
+    """
+
+    def __init__(self):
+        super().__init__()
+        self.body_color = BAD_APPLE_COLOR
+
+
+class PoisonedApple(Apple):
+    """
+    Класс, унаследованный от Aplle,
+    описывающий отравленное яблоко.
+    """
+
+    def __init__(self):
+        super().__init__()
+        self.body_color = POISONED_APPLE_COLOR
 
 
 class Snake(GameObject):
@@ -217,6 +242,8 @@ def main():
     pygame.init()
     # Экземпляры классов:
     apple = Apple()
+    bad_apple = BadApple()
+    poisoned_apple = PoisonedApple()
     snake = Snake()
     # Заполняем экран цветом
     screen.fill(BOARD_BACKGROUND_COLOR)
@@ -224,7 +251,10 @@ def main():
     while True:
         clock.tick(SPEED)
         apple.draw()
+        bad_apple.draw()
+        poisoned_apple.draw()
         snake.draw()
+
         handle_keys(snake)
         snake.update_direction()
         snake.move()
@@ -232,6 +262,22 @@ def main():
         if snake.get_head_position() == apple.position:
             snake.length += 1
             apple.position = apple.randomize_position()
+
+        if snake.get_head_position() == bad_apple.position:
+            if snake.length > 1:
+                snake.length -= 1
+                end_snake = snake.positions.pop()
+                last_rect = pygame.Rect(end_snake, (GRID_SIZE, GRID_SIZE))
+                pygame.draw.rect(screen, BOARD_BACKGROUND_COLOR, last_rect)
+            else:
+                snake.reset()
+                screen.fill(BOARD_BACKGROUND_COLOR)
+            bad_apple.position = bad_apple.randomize_position()
+
+        if snake.get_head_position() == poisoned_apple.position:
+            snake.reset()
+            screen.fill(BOARD_BACKGROUND_COLOR)
+            poisoned_apple.position = poisoned_apple.randomize_position()
 
         if snake.positions[0] in snake.positions[1:]:
             snake.reset()
