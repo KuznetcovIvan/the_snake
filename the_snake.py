@@ -87,10 +87,10 @@ class Apple(GameObject):
         Координаты выбираются так, чтобы яблоко оказалось
         в пределах игрового поля.
         """
-        possible_widh = [value for value in range(0, SCREEN_WIDTH, GRID_SIZE)]
+        possible_width = [value for value in range(0, SCREEN_WIDTH, GRID_SIZE)]
         possible_height = [value for value in range(0, SCREEN_HEIGHT, GRID_SIZE)]
 
-        return ((choice(possible_widh)), (choice(possible_height)))
+        return ((choice(possible_width)), (choice(possible_height)))
 
     def draw(self):
         """
@@ -119,7 +119,7 @@ class Snake(GameObject):
         self.length = 1
         self.positions = [((SCREEN_WIDTH // 2), (SCREEN_HEIGHT // 2))]
         self.direction = (1, 0)
-        next_direction = None
+        self.next_direction = None
         self.last = None
 
     def draw(self):
@@ -146,7 +146,7 @@ class Snake(GameObject):
                   (direction_height * GRID_SIZE + head_position_height)
                   % SCREEN_HEIGHT]
         # Добавление в начало списка:
-        self.positions = self.positions.insert(0, to_add)
+        self.positions.insert(0, to_add)
         # Удаление последнего элемента если длинна змейки не увеличилась:
         if len(self.positions) > self.length:
             self.last = self.positions.pop()
@@ -158,7 +158,7 @@ class Snake(GameObject):
         требующего перезапуска змейки.
         """
         self.positions = [((SCREEN_WIDTH // 2), (SCREEN_HEIGHT // 2))]
-        self.direction = choice(UP, DOWN, LEFT, RIGHT)
+        self.direction = choice([UP, DOWN, LEFT, RIGHT])
         self.length = 1
 
     def get_head_position(self):
@@ -215,8 +215,13 @@ def main():
         apple.draw()
         snake.draw()
         handle_keys(snake)
-        apple.draw()
-        # snake.draw()
+        snake.update_direction()
+        snake.move()
+        if snake.get_head_position() == apple.position:
+            apple.length += 1
+            apple.randomize_position()
+        if snake.get_head_position in snake.positions[1:]:
+            snake.reset()
         pygame.display.update()
 
 
