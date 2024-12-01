@@ -158,7 +158,7 @@ class Snake(GameObject):
         pygame.draw.rect(screen, self.body_color, head_rect)
         pygame.draw.rect(screen, BORDER_COLOR, head_rect, 1)
 
-        for position in self.positions[:-1]:
+        for position in self.positions[:]:
             rect = (pygame.Rect(position, (GRID_SIZE, GRID_SIZE)))
             pygame.draw.rect(screen, self.body_color, rect)
             pygame.draw.rect(screen, BORDER_COLOR, rect, 1)
@@ -245,16 +245,12 @@ def main():
     bad_apple = BadApple()
     poisoned_apple = PoisonedApple()
     snake = Snake()
-
-    # Добавляю очки на экран:
+    # Создаю шрифт для вывода очков:
     font = pygame.font.SysFont('Arial', 32)
-    score = font.render(str((snake.length) - 1), 1, (0, 0, 0))
     # Основная логика игры:
     while True:
         screen.fill(BOARD_BACKGROUND_COLOR)
         clock.tick(SPEED)
-        score = font.render(str((snake.length) - 1), 1, (0, 0, 0))
-        screen.blit(score, (20, 15))
         apple.draw()
         bad_apple.draw()
         poisoned_apple.draw()
@@ -287,6 +283,8 @@ def main():
             snake.reset()
             screen.fill(BOARD_BACKGROUND_COLOR)
 
+        score = font.render(str((snake.length) - 1), 1, (0, 0, 0))
+        screen.blit(score, (20, 15))
         pygame.display.update()
 
 
