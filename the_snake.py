@@ -33,14 +33,11 @@ BAD_APPLE_COLOR = (150, 25, 25)
 POISONED_APPLE_COLOR = (50, 25, 25)
 SNAKE_COLOR = (25, 255, 25)
 
-# Начальная скорость движения змейки:
-SPEED = 18
-
+# Cкорость движения змейки и рекордная длинна:
+speed = 20
+record_length = 1
 # Настройка игрового окна:
 screen = pg.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT), 0, 32)
-
-# Заголовок окна игрового поля:
-pg.display.set_caption('Изгиб питона')
 
 # Настройка времени:
 clock = pg.time.Clock()
@@ -215,6 +212,13 @@ def handle_keys(snake):
             if new_direction:
                 snake.update_direction(new_direction)
 
+        global speed
+        if event.type == pg.KEYDOWN:
+            if event.key == pg.K_LSHIFT and speed < 50:
+                speed += 5
+            elif event.key == pg.K_LCTRL and speed > 5:
+                speed -= 5
+
 
 def main():
     """
@@ -232,7 +236,7 @@ def main():
     # Основная логика игры:
     screen.fill(BOARD_BACKGROUND_COLOR)
     while True:
-        clock.tick(SPEED)
+        clock.tick(speed)
         handle_keys(snake)
         snake.move()
 
@@ -241,6 +245,9 @@ def main():
             apple.randomize_position(snake.positions
                                      + [bad_apple.position,
                                         poisoned_apple.position])
+            global record_length
+            if snake.length > record_length:
+                record_length = snake.length
 
         elif snake.get_head_position() == bad_apple.position:
             if snake.length > 1:
@@ -269,6 +276,10 @@ def main():
         bad_apple.draw()
         poisoned_apple.draw()
         snake.draw()
+        pg.display.set_caption(f'Snake! Esc-quit // '
+                               f'Speed:{speed:02.0f} ↑-lshift, ↓-lctrl // '
+                               f'Current length {snake.length:05.0f} // '
+                               f'Record length: {record_length:05.0f}')
         pg.display.update()
 
 
