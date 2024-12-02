@@ -134,7 +134,6 @@ class Snake(GameObject):
         self.length = 1
         self.positions = [CENTRAL_CELL]
         self.direction = (RIGHT)
-        self.next_direction = None
         self.last = None
 
     def draw(self):
@@ -185,14 +184,12 @@ class Snake(GameObject):
         position_width, position_height = self.positions[0]
         return position_width, position_height
 
-    def update_direction(self):
+    def update_direction(self, new_direction):
         """
         Метод обновления направления
         после нажатия на кнопку.
         """
-        if self.next_direction:
-            self.direction = self.next_direction
-            self.next_direction = None
+        self.direction = new_direction
 
 
 def handle_keys(snake):
@@ -207,8 +204,9 @@ def handle_keys(snake):
             raise SystemExit
 
         if event.type == pg.KEYDOWN:
-            snake.next_direction = NEW_DIRECTION.get((snake.direction,
-                                                      event.key))
+            new_direction = NEW_DIRECTION.get((snake.direction, event.key))
+            if new_direction:
+                snake.update_direction(new_direction)
 
 
 def main():
@@ -228,7 +226,6 @@ def main():
     while True:
         clock.tick(SPEED)
         handle_keys(snake)
-        snake.update_direction()
         snake.move()
 
         if snake.get_head_position() == apple.position:
