@@ -52,7 +52,7 @@ class GameObject:
     классы игровых объектов. Он содержит общие атрибуты игровых объектов.
     """
 
-    def __init__(self, body_color=(None)):
+    def __init__(self, body_color=None):
         """
         Метод инициализирует базовые атрибуты объекта,
         такие как его позиция и цвет.
@@ -69,6 +69,21 @@ class GameObject:
         raise NotImplementedError(
             f'У класса \'{self.__class__.__name__}\' не переопределен '
             'метод \'draw\'!')
+
+    def draw_single_cell(self, position, body_color=None):
+        """
+        Метод принимает параметры позицию и цвет и закрашивает ячейку.
+        Если цвет не задан, то используется body_color объекта, обрамленный
+        рамкой. Если цвет задан - рисует ячейку но без рамки.
+        """
+        if not body_color:
+            body_color = self.body_color
+            rect = pg.Rect(position, (GRID_SIZE, GRID_SIZE))
+            pg.draw.rect(screen, body_color, rect)
+            pg.draw.rect(screen, BORDER_COLOR, rect, 1)
+        else:
+            rect = pg.Rect(position, (GRID_SIZE, GRID_SIZE))
+            pg.draw.rect(screen, body_color, rect)
 
 
 class Apple(GameObject):
@@ -100,9 +115,7 @@ class Apple(GameObject):
         Метод который отрисовывает яблоко
         на игровой поверхности.
         """
-        rect = pg.Rect(self.position, (GRID_SIZE, GRID_SIZE))
-        pg.draw.rect(screen, self.body_color, rect)
-        pg.draw.rect(screen, BORDER_COLOR, rect, 1)
+        self.draw_single_cell(self.position)
 
 
 class Snake(GameObject):
@@ -129,18 +142,12 @@ class Snake(GameObject):
         Метод который отрисовывает змейку
         на игровой поверхности, затирая след.
         """
-        head_rect = pg.Rect(self.positions[0], (GRID_SIZE, GRID_SIZE))
-        pg.draw.rect(screen, self.body_color, head_rect)
-        pg.draw.rect(screen, BORDER_COLOR, head_rect, 1)
-
-        for position in self.positions[:]:
-            rect = (pg.Rect(position, (GRID_SIZE, GRID_SIZE)))
-            pg.draw.rect(screen, self.body_color, rect)
-            pg.draw.rect(screen, BORDER_COLOR, rect, 1)
+        self.draw_single_cell(self.positions[0])
 
         if self.last:
-            last_rect = pg.Rect(self.last, (GRID_SIZE, GRID_SIZE))
-            pg.draw.rect(screen, BOARD_BACKGROUND_COLOR, last_rect)
+            # last_rect = pg.Rect(self.last, (GRID_SIZE, GRID_SIZE))
+            # pg.draw.rect(screen, BOARD_BACKGROUND_COLOR, last_rect)
+            self.draw_single_cell(self.last, BOARD_BACKGROUND_COLOR)
 
     def move(self):
         """
@@ -168,9 +175,9 @@ class Snake(GameObject):
         после столкновения с собой или другого события,
         требующего перезапуска змейки.
         """
-        self.positions = [CENTRAL_CELL]
+        self.__init__(body_color=self.body_color)
+        # Сбрасывается всё, но направление теперь - случайное.
         self.direction = choice([UP, DOWN, LEFT, RIGHT])
-        self.length = 1
 
     def get_head_position(self):
         """
