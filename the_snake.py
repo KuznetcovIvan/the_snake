@@ -232,12 +232,11 @@ def main():
             snake.length += 1
             apple.position = apple.randomize_position()
 
-        if snake.get_head_position() == bad_apple.position:
+        elif snake.get_head_position() == bad_apple.position:
             if snake.length > 1:
                 snake.length -= 1
-                end_snake = snake.positions.pop()
-                last_rect = pg.Rect(end_snake, (GRID_SIZE, GRID_SIZE))
-                pg.draw.rect(screen, BOARD_BACKGROUND_COLOR, last_rect)
+                snake.draw_single_cell(snake.positions.pop(),
+                                       BOARD_BACKGROUND_COLOR)
             else:
                 snake.reset()
                 screen.fill(BOARD_BACKGROUND_COLOR)
