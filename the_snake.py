@@ -92,23 +92,30 @@ class Apple(GameObject):
     описывающий яблоко и действия с ним.
     """
 
-    def __init__(self, body_color=None):
+    def __init__(self, body_color=None, occupied_positions=[]):
         """
         Метод инициализирует базовые атрибуты объекта.
         Задаёт цвет яблока и вызывает метод randomize_position,
         чтобы установить начальную позицию яблока.
         """
         super().__init__(body_color)
-        self.position = self.randomize_position()
+        self.occupied_positions = occupied_positions
+        self.randomize_position(self.occupied_positions)
 
-    def randomize_position(self):
+    def randomize_position(self, occupied_positions=[]):
         """
         Устанавливает случайное положение яблока на игровом поле,
         задаёт атрибуту position новое значение.
         Координаты выбираются так, чтобы яблоко оказалось
         в пределах игрового поля.
         """
-        return ((choice(POSSIBLE_WIDTH)), (choice(POSSIBLE_HEIGHT)))
+        width, height = ((choice(POSSIBLE_WIDTH)), (choice(POSSIBLE_HEIGHT)))
+
+        while (width, height) in occupied_positions:
+            width, height = ((choice(POSSIBLE_WIDTH)),
+                             (choice(POSSIBLE_HEIGHT)))
+
+        self.position = (width, height)
 
     def draw(self):
         """
@@ -218,9 +225,10 @@ def main():
     pg.init()
     # Экземпляры классов:
     snake = Snake(SNAKE_COLOR)
-    apple = Apple(APPLE_COLOR)
-    bad_apple = Apple(BAD_APPLE_COLOR)
-    poisoned_apple = Apple(POISONED_APPLE_COLOR)
+    apple = Apple(APPLE_COLOR, snake.positions)
+    bad_apple = Apple(BAD_APPLE_COLOR, snake.positions + [apple.position])
+    poisoned_apple = Apple(POISONED_APPLE_COLOR, snake.positions
+                           + [apple.position, bad_apple.position])
     # Основная логика игры:
     screen.fill(BOARD_BACKGROUND_COLOR)
     while True:
@@ -230,7 +238,9 @@ def main():
 
         if snake.get_head_position() == apple.position:
             snake.length += 1
-            apple.position = apple.randomize_position()
+            apple.randomize_position(snake.positions
+                                     + [bad_apple.position,
+                                        poisoned_apple.position])
 
         elif snake.get_head_position() == bad_apple.position:
             if snake.length > 1:
@@ -240,14 +250,18 @@ def main():
             else:
                 snake.reset()
                 screen.fill(BOARD_BACKGROUND_COLOR)
-            bad_apple.position = bad_apple.randomize_position()
+            bad_apple.randomize_position(snake.positions
+                                         + [apple.position,
+                                            poisoned_apple.position])
 
-        if snake.get_head_position() == poisoned_apple.position:
+        elif snake.get_head_position() == poisoned_apple.position:
             snake.reset()
             screen.fill(BOARD_BACKGROUND_COLOR)
-            poisoned_apple.position = poisoned_apple.randomize_position()
+            poisoned_apple.randomize_position(snake.positions
+                                              + [apple.position,
+                                                 bad_apple.position])
 
-        if snake.positions[0] in snake.positions[4:]:
+        elif snake.positions[0] in snake.positions[4:]:
             snake.reset()
             screen.fill(BOARD_BACKGROUND_COLOR)
 
