@@ -9,12 +9,21 @@ GRID_WIDTH = SCREEN_WIDTH // GRID_SIZE
 GRID_HEIGHT = SCREEN_HEIGHT // GRID_SIZE
 POSSIBLE_WIDTH = [value for value in range(0, SCREEN_WIDTH, GRID_SIZE)]
 POSSIBLE_HEIGHT = [value for value in range(0, SCREEN_HEIGHT, GRID_SIZE)]
+CENTRAL_CELL = ((SCREEN_WIDTH // 2), (SCREEN_HEIGHT // 2))
 
 # Направления движения:
 UP = (0, -1)
 DOWN = (0, 1)
 LEFT = (-1, 0)
 RIGHT = (1, 0)
+NEW_DIRECTION = {(LEFT, pg.K_UP): UP,
+                 (RIGHT, pg.K_UP): UP,
+                 (UP, pg.K_LEFT): LEFT,
+                 (DOWN, pg.K_LEFT): LEFT,
+                 (LEFT, pg.K_DOWN): DOWN,
+                 (RIGHT, pg.K_DOWN): DOWN,
+                 (UP, pg.K_RIGHT): RIGHT,
+                 (DOWN, pg.K_RIGHT): RIGHT}
 
 # Цвета:
 BOARD_BACKGROUND_COLOR = (255, 255, 155)
@@ -43,13 +52,13 @@ class GameObject:
     классы игровых объектов. Он содержит общие атрибуты игровых объектов.
     """
 
-    def __init__(self):
+    def __init__(self, body_color=(None)):
         """
         Метод инициализирует базовые атрибуты объекта,
         такие как его позиция и цвет.
         """
-        self.position = ((SCREEN_WIDTH // 2), (SCREEN_HEIGHT // 2))
-        self.body_color = None
+        self.position = CENTRAL_CELL
+        self.body_color = body_color
 
     def draw(self):
         """
@@ -68,14 +77,13 @@ class Apple(GameObject):
     описывающий яблоко и действия с ним.
     """
 
-    def __init__(self):
+    def __init__(self, body_color=None):
         """
         Метод инициализирует базовые атрибуты объекта.
         Задаёт цвет яблока и вызывает метод randomize_position,
         чтобы установить начальную позицию яблока.
         """
-        super().__init__()
-        self.body_color = APPLE_COLOR
+        super().__init__(body_color)
         self.position = self.randomize_position()
 
     def randomize_position(self):
@@ -97,28 +105,6 @@ class Apple(GameObject):
         pg.draw.rect(screen, BORDER_COLOR, rect, 1)
 
 
-class BadApple(Apple):
-    """
-    Класс, унаследованный от Aplle,
-    описывающий плохое яблоко.
-    """
-
-    def __init__(self):
-        super().__init__()
-        self.body_color = BAD_APPLE_COLOR
-
-
-class PoisonedApple(Apple):
-    """
-    Класс, унаследованный от Aplle,
-    описывающий отравленное яблоко.
-    """
-
-    def __init__(self):
-        super().__init__()
-        self.body_color = POISONED_APPLE_COLOR
-
-
 class Snake(GameObject):
     """
     Класс, унаследованный от GameObject, описывающий змейку и её поведение.
@@ -126,16 +112,15 @@ class Snake(GameObject):
     а также обрабатывает действия пользователя.
     """
 
-    def __init__(self):
+    def __init__(self, body_color=None):
         """
         Метод инициализирует базовые атрибуты объекта.
         Задаёт цвет змейки.
         """
-        super().__init__()
-        self.body_color = SNAKE_COLOR
+        super().__init__(body_color)
         self.length = 1
-        self.positions = [((SCREEN_WIDTH // 2), (SCREEN_HEIGHT // 2))]
-        self.direction = (1, 0)
+        self.positions = [CENTRAL_CELL]
+        self.direction = (RIGHT)
         self.next_direction = None
         self.last = None
 
@@ -166,12 +151,13 @@ class Snake(GameObject):
         # Нахождение координат новой головы:
         direction_width, direction_height = self.direction
         head_position_width, head_position_height = self.get_head_position()
-        to_add = [(direction_width * GRID_SIZE + head_position_width)
-                  % SCREEN_WIDTH,
-                  (direction_height * GRID_SIZE + head_position_height)
-                  % SCREEN_HEIGHT]
+
         # Добавление в начало списка:
-        self.positions.insert(0, to_add)
+        self.positions.insert(0,
+                              [(direction_width * GRID_SIZE
+                                + head_position_width) % SCREEN_WIDTH,
+                               (direction_height * GRID_SIZE
+                                + head_position_height) % SCREEN_HEIGHT])
         # Удаление последнего элемента если длинна змейки не увеличилась:
         if len(self.positions) > self.length:
             self.last = self.positions.pop()
@@ -182,7 +168,7 @@ class Snake(GameObject):
         после столкновения с собой или другого события,
         требующего перезапуска змейки.
         """
-        self.positions = [((SCREEN_WIDTH // 2), (SCREEN_HEIGHT // 2))]
+        self.positions = [CENTRAL_CELL]
         self.direction = choice([UP, DOWN, LEFT, RIGHT])
         self.length = 1
 
@@ -191,7 +177,8 @@ class Snake(GameObject):
         Метод который возвращает текущее положение головы змейки
         (первый элемент в списке positions).
         """
-        return (self.positions[0][0], self.positions[0][1])
+        position_width, position_height = self.positions[0]
+        return position_width, position_height
 
     def update_direction(self):
         """
@@ -203,24 +190,20 @@ class Snake(GameObject):
             self.next_direction = None
 
 
-def handle_keys(game_object):
+def handle_keys(snake):
     """
     Функция обработки действий пользователя.
     обрабатывает нажатия клавиш, чтобы изменить направление движения змейки.
     """
     for event in pg.event.get():
-        if event.type == pg.QUIT:
+        if event.type == pg.QUIT or (event.type == pg.KEYDOWN
+                                     and event.key == pg.K_ESCAPE):
             pg.quit()
             raise SystemExit
-        elif event.type == pg.KEYDOWN:
-            if event.key == pg.K_UP and game_object.direction != DOWN:
-                game_object.next_direction = UP
-            elif event.key == pg.K_DOWN and game_object.direction != UP:
-                game_object.next_direction = DOWN
-            elif event.key == pg.K_LEFT and game_object.direction != RIGHT:
-                game_object.next_direction = LEFT
-            elif event.key == pg.K_RIGHT and game_object.direction != LEFT:
-                game_object.next_direction = RIGHT
+
+        if event.type == pg.KEYDOWN:
+            snake.next_direction = NEW_DIRECTION.get((snake.direction,
+                                                      event.key))
 
 
 def main():
@@ -231,20 +214,14 @@ def main():
     # Инициализация pg:
     pg.init()
     # Экземпляры классов:
-    apple = Apple()
-    bad_apple = BadApple()
-    poisoned_apple = PoisonedApple()
-    snake = Snake()
-    # Создаю шрифт для вывода очков:
-    font = pg.font.SysFont('Arial', 32)
+    snake = Snake(SNAKE_COLOR)
+    apple = Apple(APPLE_COLOR)
+    bad_apple = Apple(BAD_APPLE_COLOR)
+    poisoned_apple = Apple(POISONED_APPLE_COLOR)
     # Основная логика игры:
+    screen.fill(BOARD_BACKGROUND_COLOR)
     while True:
-        screen.fill(BOARD_BACKGROUND_COLOR)
         clock.tick(SPEED)
-        apple.draw()
-        bad_apple.draw()
-        poisoned_apple.draw()
-        snake.draw()
         handle_keys(snake)
         snake.update_direction()
         snake.move()
@@ -269,12 +246,14 @@ def main():
             screen.fill(BOARD_BACKGROUND_COLOR)
             poisoned_apple.position = poisoned_apple.randomize_position()
 
-        if snake.positions[0] in snake.positions[1:]:
+        if snake.positions[0] in snake.positions[4:]:
             snake.reset()
             screen.fill(BOARD_BACKGROUND_COLOR)
 
-        score = font.render(str((snake.length) - 1), 1, (0, 0, 0))
-        screen.blit(score, (20, 15))
+        apple.draw()
+        bad_apple.draw()
+        poisoned_apple.draw()
+        snake.draw()
         pg.display.update()
 
 
