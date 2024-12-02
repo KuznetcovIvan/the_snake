@@ -145,8 +145,6 @@ class Snake(GameObject):
         self.draw_single_cell(self.positions[0])
 
         if self.last:
-            # last_rect = pg.Rect(self.last, (GRID_SIZE, GRID_SIZE))
-            # pg.draw.rect(screen, BOARD_BACKGROUND_COLOR, last_rect)
             self.draw_single_cell(self.last, BOARD_BACKGROUND_COLOR)
 
     def move(self):
