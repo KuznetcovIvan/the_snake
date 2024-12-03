@@ -96,8 +96,7 @@ class Apple(GameObject):
         super().__init__(body_color)
         if occupied_positions is None:
             occupied_positions = []
-        self.occupied_positions = occupied_positions
-        self.randomize_position(self.occupied_positions)
+        self.randomize_position(occupied_positions)
 
     def randomize_position(self, occupied_positions=None):
         """
@@ -222,9 +221,9 @@ def main():
     # Экземпляры классов:
     snake = Snake()
     apple = Apple(occupied_positions=snake.positions)
-    bad_apple = Apple(BAD_APPLE_COLOR, snake.positions + [apple.position])
-    poisoned_apple = Apple(POISONED_APPLE_COLOR, snake.positions
-                           + [apple.position, bad_apple.position])
+    bad_apple = Apple(BAD_APPLE_COLOR, (*snake.positions, apple.position))
+    poisoned_apple = Apple(POISONED_APPLE_COLOR, (
+        *snake.positions, apple.position, bad_apple.position))
     # Основная логика игры:
     screen.fill(BOARD_BACKGROUND_COLOR)
     while True:
@@ -247,16 +246,14 @@ def main():
             else:
                 snake.reset()
                 screen.fill(BOARD_BACKGROUND_COLOR)
-            bad_apple.randomize_position(snake.positions
-                                         + [apple.position,
-                                            poisoned_apple.position])
+            bad_apple.randomize_position(
+                (*snake.positions, apple.position, poisoned_apple.position))
 
         elif snake.get_head_position() == list(poisoned_apple.position):
             snake.reset()
             screen.fill(BOARD_BACKGROUND_COLOR)
-            poisoned_apple.randomize_position(snake.positions
-                                              + [apple.position,
-                                                 bad_apple.position])
+            poisoned_apple.randomize_position((
+                *snake.positions, apple.position, bad_apple.position))
 
         elif snake.get_head_position() in snake.positions[4:]:
             snake.reset()
