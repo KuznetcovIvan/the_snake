@@ -65,7 +65,8 @@ class GameObject:
         отрисовываться на экране.
         """
         raise NotImplementedError(
-            f'В классе \'{type(self).__name__}\' не переопределен метод \'draw\'!')
+            f'В классе \'{type(self).__name__}\' '
+            'не переопределен метод \'draw\'!')
 
     def draw_cell(self, position, body_color=None):
         """
@@ -73,7 +74,6 @@ class GameObject:
         Если цвет не задан, то используется body_color объекта, обрамленный
         рамкой. Если цвет задан - рисует ячейку но без рамки.
         """
-
         rect = pg.Rect(position, (GRID_SIZE, GRID_SIZE))
         pg.draw.rect(screen, body_color, rect) if body_color else (
             pg.draw.rect(screen, self.body_color, rect))
@@ -106,8 +106,8 @@ class Apple(GameObject):
         Координаты выбираются так, чтобы яблоко оказалось
         в пределах игрового поля.
         """
-        self.position = choice(tuple(ALL_CELLS - set(map(tuple,
-                                                         occupied_positions))))
+        self.position = choice(tuple(
+            ALL_CELLS - set(map(tuple, occupied_positions))))
 
     def draw(self):
         """
@@ -179,8 +179,7 @@ class Snake(GameObject):
         Метод который возвращает текущее положение головы змейки
         (первый элемент в списке positions).
         """
-        position_width, position_height = self.positions[0]
-        return position_width, position_height
+        return self.positions[0]
 
     def update_direction(self, new_direction):
         """
@@ -202,16 +201,15 @@ def handle_keys(snake):
             raise SystemExit
 
         if event.type == pg.KEYDOWN:
-            new_direction = TURNS.get((snake.direction, event.key))
-            if new_direction:
-                snake.update_direction(new_direction)
+            snake.update_direction(
+                TURNS.get((snake.direction, event.key), snake.direction))
 
         global speed
         if event.type == pg.KEYDOWN:
-            if event.key == pg.K_LSHIFT and speed < 50:
-                speed += 5
-            elif event.key == pg.K_LCTRL and speed > 5:
-                speed -= 5
+            if event.key == pg.K_LSHIFT:
+                speed = min(speed + 5, 50)
+            elif event.key == pg.K_LCTRL:
+                speed = max(speed - 5, 5)
 
 
 def main():
@@ -222,8 +220,8 @@ def main():
     # Инициализация pg:
     pg.init()
     # Экземпляры классов:
-    snake = Snake(SNAKE_COLOR)
-    apple = Apple(APPLE_COLOR, snake.positions)
+    snake = Snake()
+    apple = Apple(occupied_positions=snake.positions)
     bad_apple = Apple(BAD_APPLE_COLOR, snake.positions + [apple.position])
     poisoned_apple = Apple(POISONED_APPLE_COLOR, snake.positions
                            + [apple.position, bad_apple.position])
@@ -234,16 +232,14 @@ def main():
         handle_keys(snake)
         snake.move()
 
-        if snake.get_head_position() == apple.position:
+        if snake.get_head_position() == list(apple.position):
             snake.length += 1
-            apple.randomize_position(snake.positions
-                                     + [bad_apple.position,
-                                        poisoned_apple.position])
+            apple.randomize_position((
+                *snake.positions, bad_apple.position, poisoned_apple.position))
             global record_length
-            if snake.length > record_length:
-                record_length = snake.length
+            record_length = max(record_length, snake.length)
 
-        elif snake.get_head_position() == bad_apple.position:
+        elif snake.get_head_position() == list(bad_apple.position):
             if snake.length > 1:
                 snake.length -= 1
                 snake.draw_cell(snake.positions.pop(),
@@ -255,14 +251,14 @@ def main():
                                          + [apple.position,
                                             poisoned_apple.position])
 
-        elif snake.get_head_position() == poisoned_apple.position:
+        elif snake.get_head_position() == list(poisoned_apple.position):
             snake.reset()
             screen.fill(BOARD_BACKGROUND_COLOR)
             poisoned_apple.randomize_position(snake.positions
                                               + [apple.position,
                                                  bad_apple.position])
 
-        elif snake.positions[0] in snake.positions[4:]:
+        elif snake.get_head_position() in snake.positions[4:]:
             snake.reset()
             screen.fill(BOARD_BACKGROUND_COLOR)
 
@@ -271,9 +267,9 @@ def main():
         poisoned_apple.draw()
         snake.draw()
         pg.display.set_caption(f'Snake! Esc-quit // '
-                               f'Speed:{speed:02.0f} ↑-lshift, ↓-lctrl // '
-                               f'Current length {snake.length:05.0f} // '
-                               f'Record length: {record_length:05.0f}')
+                               f'Speed:{speed} ↑-lshift, ↓-lctrl // '
+                               f'Length: {snake.length} // '
+                               f'Record: {record_length}')
         pg.display.update()
 
 
