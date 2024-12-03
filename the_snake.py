@@ -10,20 +10,21 @@ GRID_HEIGHT = SCREEN_HEIGHT // GRID_SIZE
 POSSIBLE_WIDTH = [value for value in range(0, SCREEN_WIDTH, GRID_SIZE)]
 POSSIBLE_HEIGHT = [value for value in range(0, SCREEN_HEIGHT, GRID_SIZE)]
 CENTRAL_CELL = ((SCREEN_WIDTH // 2), (SCREEN_HEIGHT // 2))
+ALL_CELLS = set((w, h) for w in POSSIBLE_WIDTH for h in POSSIBLE_HEIGHT)
 
 # Направления движения:
 UP = (0, -1)
 DOWN = (0, 1)
 LEFT = (-1, 0)
 RIGHT = (1, 0)
-NEW_DIRECTION = {(LEFT, pg.K_UP): UP,
-                 (RIGHT, pg.K_UP): UP,
-                 (UP, pg.K_LEFT): LEFT,
-                 (DOWN, pg.K_LEFT): LEFT,
-                 (LEFT, pg.K_DOWN): DOWN,
-                 (RIGHT, pg.K_DOWN): DOWN,
-                 (UP, pg.K_RIGHT): RIGHT,
-                 (DOWN, pg.K_RIGHT): RIGHT}
+TURNS = {(LEFT, pg.K_UP): UP,
+         (RIGHT, pg.K_UP): UP,
+         (UP, pg.K_LEFT): LEFT,
+         (DOWN, pg.K_LEFT): LEFT,
+         (LEFT, pg.K_DOWN): DOWN,
+         (RIGHT, pg.K_DOWN): DOWN,
+         (UP, pg.K_RIGHT): RIGHT,
+         (DOWN, pg.K_RIGHT): RIGHT}
 
 # Цвета:
 BOARD_BACKGROUND_COLOR = (255, 255, 155)
@@ -64,23 +65,20 @@ class GameObject:
         отрисовываться на экране.
         """
         raise NotImplementedError(
-            f'У класса \'{self.__class__.__name__}\' не переопределен '
-            'метод \'draw\'!')
+            f'В классе \'{type(self).__name__}\' не переопределен метод \'draw\'!')
 
-    def draw_single_cell(self, position, body_color=None):
+    def draw_cell(self, position, body_color=None):
         """
         Метод принимает параметры позицию и цвет и закрашивает ячейку.
         Если цвет не задан, то используется body_color объекта, обрамленный
         рамкой. Если цвет задан - рисует ячейку но без рамки.
         """
+
+        rect = pg.Rect(position, (GRID_SIZE, GRID_SIZE))
+        pg.draw.rect(screen, body_color, rect) if body_color else (
+            pg.draw.rect(screen, self.body_color, rect))
         if not body_color:
-            body_color = self.body_color
-            rect = pg.Rect(position, (GRID_SIZE, GRID_SIZE))
-            pg.draw.rect(screen, body_color, rect)
             pg.draw.rect(screen, BORDER_COLOR, rect, 1)
-        else:
-            rect = pg.Rect(position, (GRID_SIZE, GRID_SIZE))
-            pg.draw.rect(screen, body_color, rect)
 
 
 class Apple(GameObject):
@@ -89,37 +87,34 @@ class Apple(GameObject):
     описывающий яблоко и действия с ним.
     """
 
-    def __init__(self, body_color=None, occupied_positions=[]):
+    def __init__(self, body_color=APPLE_COLOR, occupied_positions=None):
         """
         Метод инициализирует базовые атрибуты объекта.
         Задаёт цвет яблока и вызывает метод randomize_position,
         чтобы установить начальную позицию яблока.
         """
         super().__init__(body_color)
+        if occupied_positions is None:
+            occupied_positions = []
         self.occupied_positions = occupied_positions
         self.randomize_position(self.occupied_positions)
 
-    def randomize_position(self, occupied_positions=[]):
+    def randomize_position(self, occupied_positions=None):
         """
         Устанавливает случайное положение яблока на игровом поле,
         задаёт атрибуту position новое значение.
         Координаты выбираются так, чтобы яблоко оказалось
         в пределах игрового поля.
         """
-        width, height = ((choice(POSSIBLE_WIDTH)), (choice(POSSIBLE_HEIGHT)))
-
-        while (width, height) in occupied_positions:
-            width, height = ((choice(POSSIBLE_WIDTH)),
-                             (choice(POSSIBLE_HEIGHT)))
-
-        self.position = (width, height)
+        self.position = choice(tuple(ALL_CELLS - set(map(tuple,
+                                                         occupied_positions))))
 
     def draw(self):
         """
         Метод который отрисовывает яблоко
         на игровой поверхности.
         """
-        self.draw_single_cell(self.position)
+        self.draw_cell(self.position)
 
 
 class Snake(GameObject):
@@ -129,26 +124,23 @@ class Snake(GameObject):
     а также обрабатывает действия пользователя.
     """
 
-    def __init__(self, body_color=None):
+    def __init__(self, body_color=SNAKE_COLOR):
         """
         Метод инициализирует базовые атрибуты объекта.
         Задаёт цвет змейки.
         """
         super().__init__(body_color)
-        self.length = 1
-        self.positions = [CENTRAL_CELL]
-        self.direction = (RIGHT)
-        self.last = None
+        self.reset()
 
     def draw(self):
         """
         Метод который отрисовывает змейку
         на игровой поверхности, затирая след.
         """
-        self.draw_single_cell(self.positions[0])
+        self.draw_cell(self.get_head_position())
 
         if self.last:
-            self.draw_single_cell(self.last, BOARD_BACKGROUND_COLOR)
+            self.draw_cell(self.last, BOARD_BACKGROUND_COLOR)
 
     def move(self):
         """
@@ -161,11 +153,12 @@ class Snake(GameObject):
         head_position_width, head_position_height = self.get_head_position()
 
         # Добавление в начало списка:
-        self.positions.insert(0,
-                              [(direction_width * GRID_SIZE
-                                + head_position_width) % SCREEN_WIDTH,
-                               (direction_height * GRID_SIZE
-                                + head_position_height) % SCREEN_HEIGHT])
+        self.positions.insert(0, [
+            (direction_width * GRID_SIZE + head_position_width)
+            % SCREEN_WIDTH,
+            (direction_height * GRID_SIZE + head_position_height)
+            % SCREEN_HEIGHT
+        ])
         # Удаление последнего элемента если длинна змейки не увеличилась:
         if len(self.positions) > self.length:
             self.last = self.positions.pop()
@@ -176,9 +169,10 @@ class Snake(GameObject):
         после столкновения с собой или другого события,
         требующего перезапуска змейки.
         """
-        self.__init__(body_color=self.body_color)
-        # Сбрасывается всё, но направление теперь - случайное.
+        self.length = 1
+        self.positions = [CENTRAL_CELL]
         self.direction = choice([UP, DOWN, LEFT, RIGHT])
+        self.last = None
 
     def get_head_position(self):
         """
@@ -208,7 +202,7 @@ def handle_keys(snake):
             raise SystemExit
 
         if event.type == pg.KEYDOWN:
-            new_direction = NEW_DIRECTION.get((snake.direction, event.key))
+            new_direction = TURNS.get((snake.direction, event.key))
             if new_direction:
                 snake.update_direction(new_direction)
 
@@ -252,8 +246,8 @@ def main():
         elif snake.get_head_position() == bad_apple.position:
             if snake.length > 1:
                 snake.length -= 1
-                snake.draw_single_cell(snake.positions.pop(),
-                                       BOARD_BACKGROUND_COLOR)
+                snake.draw_cell(snake.positions.pop(),
+                                BOARD_BACKGROUND_COLOR)
             else:
                 snake.reset()
                 screen.fill(BOARD_BACKGROUND_COLOR)
