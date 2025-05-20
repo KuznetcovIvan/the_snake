@@ -2,7 +2,6 @@ from random import choice
 
 import pygame as pg
 
-# Константы для размеров поля и сетки:
 SCREEN_WIDTH, SCREEN_HEIGHT = 640, 480
 GRID_SIZE = 20
 GRID_WIDTH = SCREEN_WIDTH // GRID_SIZE
@@ -12,7 +11,6 @@ POSSIBLE_HEIGHT = [value for value in range(0, SCREEN_HEIGHT, GRID_SIZE)]
 CENTRAL_CELL = ((SCREEN_WIDTH // 2), (SCREEN_HEIGHT // 2))
 ALL_CELLS = set((w, h) for w in POSSIBLE_WIDTH for h in POSSIBLE_HEIGHT)
 
-# Направления движения:
 UP = (0, -1)
 DOWN = (0, 1)
 LEFT = (-1, 0)
@@ -26,7 +24,6 @@ TURNS = {(LEFT, pg.K_UP): UP,
          (UP, pg.K_RIGHT): RIGHT,
          (DOWN, pg.K_RIGHT): RIGHT}
 
-# Цвета:
 BOARD_BACKGROUND_COLOR = (255, 255, 155)
 BORDER_COLOR = (0, 0, 0)
 APPLE_COLOR = (255, 25, 25)
@@ -34,21 +31,15 @@ BAD_APPLE_COLOR = (150, 25, 25)
 POISONED_APPLE_COLOR = (50, 25, 25)
 SNAKE_COLOR = (25, 255, 25)
 
-# Cкорость движения змейки и рекордная длинна:
 speed = 20
 record_length = 1
-# Настройка игрового окна:
-screen = pg.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT), 0, 32)
 
-# Настройка времени:
+screen = pg.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT), 0, 32)
 clock = pg.time.Clock()
 
 
 class GameObject:
-    """
-    Это базовый класс игровых объектов, от которого наследуются другие
-    классы игровых объектов. Он содержит общие атрибуты игровых объектов.
-    """
+    """Базовый класс игровых объектов."""
 
     def __init__(self, body_color=None):
         """
@@ -66,7 +57,8 @@ class GameObject:
         """
         raise NotImplementedError(
             f'В классе \'{type(self).__name__}\' '
-            'не переопределен метод \'draw\'!')
+            'не переопределен метод \'draw\'!'
+        )
 
     def draw_cell(self, position, body_color=None):
         """
@@ -76,7 +68,8 @@ class GameObject:
         """
         rect = pg.Rect(position, (GRID_SIZE, GRID_SIZE))
         pg.draw.rect(screen, body_color, rect) if body_color else (
-            pg.draw.rect(screen, self.body_color, rect))
+            pg.draw.rect(screen, self.body_color, rect)
+        )
         if not body_color:
             pg.draw.rect(screen, BORDER_COLOR, rect, 1)
 
@@ -147,18 +140,15 @@ class Snake(GameObject):
         добавляя новую голову в начало списка positions
         и удаляя последний элемент, если длина змейки не увеличилась.
         """
-        # Нахождение координат новой головы:
         direction_width, direction_height = self.direction
         head_position_width, head_position_height = self.get_head_position()
 
-        # Добавление в начало списка:
         self.positions.insert(0, [
             (direction_width * GRID_SIZE + head_position_width)
             % SCREEN_WIDTH,
             (direction_height * GRID_SIZE + head_position_height)
             % SCREEN_HEIGHT
         ])
-        # Удаление последнего элемента если длинна змейки не увеличилась:
         if len(self.positions) > self.length:
             self.last = self.positions.pop()
 
@@ -198,11 +188,10 @@ def handle_keys(snake):
                                      and event.key == pg.K_ESCAPE):
             pg.quit()
             raise SystemExit
-
         if event.type == pg.KEYDOWN:
             snake.update_direction(
-                TURNS.get((snake.direction, event.key), snake.direction))
-
+                TURNS.get((snake.direction, event.key), snake.direction)
+            )
         global speed
         if event.type == pg.KEYDOWN:
             if event.key == pg.K_LSHIFT:
@@ -216,28 +205,25 @@ def main():
     Функция - точка входа программы,
     выполняет основную логику игры.
     """
-    # Инициализация pg:
     pg.init()
-    # Экземпляры классов:
     snake = Snake()
     apple = Apple(occupied_positions=snake.positions)
     bad_apple = Apple(BAD_APPLE_COLOR, (*snake.positions, apple.position))
     poisoned_apple = Apple(POISONED_APPLE_COLOR, (
-        *snake.positions, apple.position, bad_apple.position))
-    # Основная логика игры:
+        *snake.positions, apple.position, bad_apple.position
+    ))
     screen.fill(BOARD_BACKGROUND_COLOR)
     while True:
         clock.tick(speed)
         handle_keys(snake)
         snake.move()
-
         if snake.get_head_position() == list(apple.position):
             snake.length += 1
             apple.randomize_position((
-                *snake.positions, bad_apple.position, poisoned_apple.position))
+                *snake.positions, bad_apple.position, poisoned_apple.position
+            ))
             global record_length
             record_length = max(record_length, snake.length)
-
         elif snake.get_head_position() == list(bad_apple.position):
             if snake.length > 1:
                 snake.length -= 1
@@ -247,13 +233,14 @@ def main():
                 snake.reset()
                 screen.fill(BOARD_BACKGROUND_COLOR)
             bad_apple.randomize_position(
-                (*snake.positions, apple.position, poisoned_apple.position))
-
+                (*snake.positions, apple.position, poisoned_apple.position)
+            )
         elif snake.get_head_position() == list(poisoned_apple.position):
             snake.reset()
             screen.fill(BOARD_BACKGROUND_COLOR)
             poisoned_apple.randomize_position((
-                *snake.positions, apple.position, bad_apple.position))
+                *snake.positions, apple.position, bad_apple.position
+            ))
 
         elif snake.get_head_position() in snake.positions[4:]:
             snake.reset()
